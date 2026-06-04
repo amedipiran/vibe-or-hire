@@ -1,133 +1,104 @@
 (function () {
   "use strict";
 
+  /* === GHL-KOPPLING ================================================
+     Klistra in din GHL Inbound Webhook-URL mellan citattecknen nedan.
+     Tom sträng = demo-läge (inget skickas, "Tack"-skärmen visas ändå).
+     Hämtas i GHL: Automation → Workflows → ny workflow →
+     trigger "Inbound Webhook" → kopiera webhook-URL:en hit.
+     ================================================================= */
+var GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/NqFyczCDOfGfkFkZBRb3/webhook-trigger/0c9fb463-e456-42be-94e1-395e5c6ad386';
+
   /* =====================================================================
      Data + scoring model — "Vibe eller proffs?".
      Four paths; every answer carries hidden weights toward them. The live
      results bar shows the distribution; the form gate computes the lead.
      ===================================================================== */
   var paths = [
-    { key: 'self',   lbl: 'GÖR SJÄLV' },
-    { key: 'proto',  lbl: 'PROTOTYP' },
-    { key: 'agency', lbl: 'TA IN ANGRY' },
-    { key: 'fix',    lbl: 'FIXA' }
+    { key: 'self',  lbl: 'Vibe-coda' },
+    { key: 'proto', lbl: 'Delvis vibe' },
+    { key: 'qala',  lbl: 'Anlita proffs' }
   ];
 
   var pathNames = {
-    self:   'Vibe-coda själv',
-    proto:  'Vibe-coda först → ta sedan in Angry',
-    agency: 'Ta in Angry direkt',
-    fix:    'Fixa / migrera det du har'
+    self:  'Vibe-coda det själv',
+    proto: 'Börja själv, vi tar över',
+    qala:  'Vi bygger det med Qala'
   };
 
   var questions = [
-    { q: 'Vad vill du bygga eller göra?', opts: [
-      { ol: 'Ett litet internt verktyg eller experiment', od: 'För egna teamet, inget stort', w: { self: 3, proto: 1 } },
-      { ol: 'En MVP för att testa en idé', od: 'Vill validera innan jag satsar', w: { proto: 3, self: 1 } },
-      { ol: 'En kundvänd sajt eller webbshop som ska leva', od: 'Riktiga användare, långsiktigt', w: { agency: 3, proto: 1 } },
-      { ol: 'En komplex plattform', od: 'B2B, integrationer, skala', w: { agency: 4 } },
-      { ol: 'Jag har redan en sajt som krånglar eller ska flyttas', od: 'Vill fixa eller migrera det som finns', w: { fix: 4 } }
+    { q: 'Vad är det för projekt?', opts: [
+      { ol: 'Ett experiment eller en intern grej', od: 'Mest för mig eller teamet', w: { self: 3 } },
+      { ol: 'En idé jag vill testa på riktiga användare', od: 'Validera innan jag satsar', w: { proto: 3, self: 1 } },
+      { ol: 'Något som ska bli en del av verksamheten', od: 'Ska användas på riktigt', w: { qala: 3, proto: 1 } },
+      { ol: 'En kundvänd sajt eller webbshop som ska leva', od: '', w: { qala: 4 } }
     ] },
-    { q: 'Hur många kommer att använda den?', opts: [
-      { ol: 'Bara jag', od: 'Solo', w: { self: 3 } },
-      { ol: 'Litet internt team (2–10)', od: '', w: { self: 2, proto: 1 } },
-      { ol: 'En hel avdelning (10–50)', od: '', w: { proto: 1, agency: 1 } },
-      { ol: 'Betalande kunder', od: '', w: { proto: 2, agency: 2 } },
-      { ol: 'Hundratals', od: '', w: { agency: 3 } },
-      { ol: 'Tusentals eller fler', od: '', w: { agency: 4 } }
+    { q: 'Hur länge ska det leva?', opts: [
+      { ol: 'Dagar eller veckor, sen slänger jag det', od: '', w: { self: 3 } },
+      { ol: 'Några månader', od: '', w: { self: 2, proto: 2 } },
+      { ol: 'Ett par år', od: '', w: { proto: 2, qala: 1 } },
+      { ol: 'Långsiktigt, det ska bara funka', od: '', w: { qala: 3 } },
+      { ol: 'Det ska bli en central del av företaget', od: '', w: { qala: 4 } }
     ] },
-    { q: 'Hur viktig är driftsäkerhet?', opts: [
-      { ol: 'Får gärna krångla ibland', od: '', w: { self: 3 } },
-      { ol: 'Mindre problem är okej', od: '', w: { self: 2, proto: 1 } },
-      { ol: 'Måste funka pålitligt', od: '', w: { proto: 1, agency: 2 } },
-      { ol: 'Nere skulle skada verksamheten', od: '', w: { agency: 3 } },
-      { ol: 'Fel = allvarlig affärsrisk', od: '', w: { agency: 4 } }
+    { q: 'Vem ska underhålla det sen?', opts: [
+      { ol: 'Ingen, det är en engångsgrej', od: '', w: { self: 3 } },
+      { ol: 'Jag själv, så länge det behövs', od: '', w: { self: 2, proto: 1 } },
+      { ol: 'Vi internt, men ingen är utvecklare', od: '', w: { proto: 1, qala: 2 } },
+      { ol: 'Det måste kunna tas över och vidareutvecklas', od: '', w: { qala: 4 } }
     ] },
-    { q: 'Hanterar den känslig data?', opts: [
-      { ol: 'Ingen känslig data', od: '', w: { self: 3, proto: 1 } },
-      { ol: 'Intern affärsdata (ingen kund-PII)', od: '', w: { self: 1, proto: 1, agency: 1 } },
-      { ol: 'Kundkonton (inloggningar, profiler)', od: '', w: { agency: 2, proto: 1 } },
-      { ol: 'Betal- eller faktureringsuppgifter', od: '', w: { agency: 3 } },
-      { ol: 'Vård / juridik / regelkänsligt', od: '', w: { agency: 4 } }
+    { q: 'Hur många ska använda det?', opts: [
+      { ol: 'Bara jag eller några få', od: '', w: { self: 3 } },
+      { ol: 'Ett internt team', od: '', w: { self: 1, proto: 2 } },
+      { ol: 'Betalande kunder', od: '', w: { proto: 1, qala: 2 } },
+      { ol: 'Många, och det ska kunna växa', od: '', w: { qala: 4 } }
     ] },
-    { q: 'Hur länge ska lösningen leva?', opts: [
-      { ol: 'Dagar eller veckor (engångsgrej)', od: '', w: { self: 3 } },
-      { ol: 'Några månader (kortsiktigt)', od: '', w: { self: 2, proto: 2 } },
-      { ol: '1–2 år (medellångt)', od: '', w: { proto: 2, agency: 1 } },
-      { ol: 'Långsiktigt affärssystem', od: '', w: { agency: 3 } },
-      { ol: 'Kärnan i företaget (ryggraden)', od: '', w: { agency: 4 } }
+    { q: 'Hanterar det känslig data eller betalningar?', opts: [
+      { ol: 'Nej', od: '', w: { self: 3, proto: 1 } },
+      { ol: 'Lite intern data', od: '', w: { self: 1, proto: 1, qala: 1 } },
+      { ol: 'Kundkonton och inloggningar', od: '', w: { qala: 3 } },
+      { ol: 'Betalningar eller känsliga uppgifter', od: '', w: { qala: 4 } }
     ] },
-    { q: 'Hur komplexa är arbetsflödena?', opts: [
-      { ol: 'Mycket enkla', od: '', w: { self: 3 } },
-      { ol: 'Mestadels rakt på sak', od: '', w: { self: 2, proto: 1 } },
-      { ol: 'Flera rörliga delar', od: '', w: { proto: 2, agency: 1 } },
-      { ol: 'Många flöden och specialfall', od: '', w: { agency: 3 } },
-      { ol: 'Komplex affärslogik (svår att ens beskriva)', od: '', w: { agency: 4 } }
-    ] },
-    { q: 'Hur uppkopplad behöver den vara?', opts: [
-      { ol: 'Fristående (inga integrationer)', od: '', w: { self: 3 } },
-      { ol: 'En till två integrationer (inlogg, mail, betalning)', od: '', w: { proto: 2, self: 1 } },
-      { ol: 'Flera system (CRM, fakturering, analys)', od: '', w: { agency: 3 } },
-      { ol: 'Många flöden mellan verktyg', od: '', w: { agency: 3 } },
-      { ol: 'Det finns redan ett virrvarr av verktyg', od: '', w: { fix: 2, agency: 2 } }
+    { q: 'Har du redan vibe-codat något?', opts: [
+      { ol: 'Nej, inte än', od: 'Lovable, Bolt, Cursor, v0, Replit …', w: { qala: 1, proto: 1 } },
+      { ol: 'Pillat lite', od: '', w: { self: 2, proto: 1 } },
+      { ol: 'Byggt en prototyp', od: '', w: { proto: 3, self: 1 } },
+      { ol: 'Byggt något men vill ta det vidare', od: '', w: { proto: 2, qala: 2 } }
     ] },
     { q: 'Vad är viktigast just nu?', opts: [
-      { ol: 'Lansera så fort som möjligt', od: '', w: { self: 2, proto: 2 } },
-      { ol: 'Hålla kostnaden låg', od: '', w: { self: 3 } },
-      { ol: 'Validera idén snabbt', od: '', w: { proto: 3 } },
-      { ol: 'Stabilitet och underhållbarhet', od: '', w: { agency: 3 } },
-      { ol: 'Långsiktig skalbarhet', od: '', w: { agency: 3 } }
-    ] },
-    { q: 'Har du redan testat AI- eller no-code-verktyg?', opts: [
-      { ol: 'Nej', od: 'Lovable, Bolt, Cursor, v0, Replit …', w: { agency: 1, proto: 1 } },
-      { ol: 'Pillat lite', od: '', w: { self: 2, proto: 1 } },
-      { ol: 'Byggt en delvis prototyp', od: '', w: { proto: 3, self: 1 } },
-      { ol: 'Byggt något men kört fast', od: '', w: { proto: 2, agency: 2 } },
-      { ol: 'Validerar redan med användare', od: '', w: { proto: 2, agency: 2 } }
-    ] },
-    { q: 'Vad är din största oro?', opts: [
-      { ol: 'Att bygga fel sak', od: '', w: { proto: 2, self: 1 } },
-      { ol: 'Säkerhet och integritet', od: '', w: { agency: 3 } },
-      { ol: 'Att slänga pengar på utveckling', od: '', w: { proto: 2, self: 1 } },
-      { ol: 'Att AI/no-code-bygget pajar sen', od: '', w: { proto: 2, agency: 1 } },
-      { ol: 'Att det går för långsamt', od: '', w: { self: 1, proto: 1 } },
-      { ol: 'Teknisk skuld', od: '', w: { agency: 2, proto: 1 } },
-      { ol: 'Min nuvarande sajt eller byrå funkar inte', od: '', w: { fix: 4 } }
+      { ol: 'Komma igång snabbt och billigt', od: '', w: { self: 3 } },
+      { ol: 'Testa om idén håller', od: '', w: { proto: 3 } },
+      { ol: 'Att det håller över tid', od: '', w: { qala: 3 } },
+      { ol: 'Att det är tryggt och kan skalas', od: '', w: { qala: 3 } }
     ] }
   ];
 
   var landing = {
     values: [
-      { h: 'Byggd för riktiga projekt', p: 'Vi frågar om säkerhet, skala och drift. Sånt som faktiskt avgör hur du bör bygga.' },
-      { h: 'Ett rakt svar', p: 'Du får en ärlig rekommendation — även när det betyder att du inte bör bygga själv ännu.' },
-      { h: 'Vet vad du gör sen', p: 'Du får ett tydligt nästa steg att gå vidare med.' }
+      { h: 'Lär dig när vibe-coding räcker', p: 'Ibland räcker det att vibe-coda. Ibland håller det inte. Vi hjälper dig se skillnaden.' },
+      { h: 'Ett rakt svar', p: 'Inget säljsnack. Du får veta vad som passar ditt projekt.' },
+      { h: 'Tar två minuter', p: 'Sju snabba frågor, sen får du svaret i mejlen.' }
     ],
     forYou: [
-      'Har testat Lovable, Base44 eller Bolt och kört fast',
-      'Har en MVP som ska lanseras snabbt utan teknisk skuld',
-      'Får motstridiga råd om hur du borde bygga',
-      'Har en sajt som krånglar, är långsam eller svår att underhålla',
-      'Vill veta om du ska bygga själv eller ta in hjälp'
+      'Har vibe-codat något och undrar om det håller',
+      'Vill komma igång snabbt utan teknisk skuld',
+      'Har en idé du vill testa innan du satsar',
+      'Vill veta när du bör bygga något som håller'
     ],
     ways: [
-      { h: 'Vibe-coda själv',
-        sub: 'Du bygger det själv med AI- och no-code-verktyg, utan hjälp.',
-        best: ['Enkla projekt med tydlig avgränsning', 'Tester och experiment innan du satsar'],
-        trade: ['Svårt att hantera många användare', 'Risk för säkerhetshål med känslig data'] },
-      { h: 'Vibe-coda först → ta in Angry',
-        sub: 'Du gör en snabb prototyp själv, sedan bygger vi den färdig och driftsäker.',
-        best: ['Dig som vill komma igång snabbt och billigt', 'Idéer som behöver testas innan de byggs på riktigt'],
-        trade: ['Prototypen byggs oftast om från grunden', 'Funkar bäst om du lämnar över i rätt läge'] },
-      { h: 'Ta in Angry direkt',
-        sub: 'Vi tar hand om hela bygget från start.',
-        best: ['Komplexa projekt med mycket okänt', 'När krav på skala, säkerhet eller regler finns från dag ett'],
-        trade: ['Större investering från början', 'Vi behöver tid att kartlägga och planera först'] },
-      { h: 'Fixa / migrera det du har',
-        sub: 'Vi förbättrar, snabbar upp eller flyttar din befintliga sajt.',
-        best: ['En sajt som krånglar eller är långsam', 'Flytt till WordPress eller WooCommerce'],
-        trade: ['Vi behöver gå igenom det som finns först', 'Ibland är det billigare att bygga nytt'] }
+      { h: 'Vibe-coda det själv',
+        sub: 'Bygg det själv med AI. Snabbt och billigt.',
+        best: ['Experiment och interna grejer', 'Testa en idé innan du satsar'],
+        trade: ['Inte byggt för att hålla länge', 'Svårt att skala och underhålla'] },
+      { h: 'Börja själv, vi tar över',
+        sub: 'Du kommer igång och validerar, sen bygger vi vidare och gör det stabilt.',
+        best: ['Idéer som ska testas först', 'Komma igång nu utan att fastna'],
+        trade: ['Prototypen byggs oftast om', 'Funkar bäst om du lämnar över i rätt läge'] },
+      { h: 'Vi tar hela bygget',
+        sub: 'Vi gör det ordentligt med Qala, så det håller och går att underhålla.',
+        best: ['Ska leva, växa och underhållas', 'Kräver säkerhet eller driftsäkerhet'],
+        trade: ['Större insats från start', 'Vi planerar tillsammans först'] }
     ],
-    factors: ['Säkerhetskrav', 'Förväntad skala', 'Integrationskomplexitet', 'Livslängd', 'Hastighet', 'Budget', 'Intern teknisk kapacitet', 'Driftsrisk']
+    factors: ['Livslängd', 'Underhåll', 'Säkerhet', 'Skala', 'Budget', 'Hur kritiskt det är']
   };
 
   /* ---------------------------------------------------------------------
@@ -154,7 +125,7 @@
   /* ---------------------------------------------------------------------
      State + persistence (restores where the visitor left off).
      --------------------------------------------------------------------- */
-  var STORE = 'ac_quiz_v2';
+  var STORE = 'ac_quiz_v5';
   function loadState() {
     try { var s = JSON.parse(localStorage.getItem(STORE)); if (s && s.scores) return s; } catch (e) {}
     return null;
@@ -167,7 +138,7 @@
   var S = {
     screen: saved ? saved.screen : 'landing',
     idx: saved ? saved.idx : 0,
-    scores: saved ? saved.scores : { self: 0, proto: 0, agency: 0, fix: 0 },
+    scores: saved ? saved.scores : { self: 0, proto: 0, qala: 0 },
     answers: saved ? saved.answers : []
   };
   var lock = false;
@@ -195,8 +166,8 @@
     var L = landing;
 
     var hero = el('section', { class: 'ac-hero' }, [
-      el('h1', { class: 'ac-h1', html: 'Ska du <span class="hl">vibe-coda</span> det själv – eller ta in ett proffsteam?' }),
-      el('p', { class: 'ac-hero-sub' }, 'Svara på tio frågor så säger vi hur du bäst bygger ditt projekt. Det tar ett par minuter.'),
+      el('h1', { class: 'ac-h1', html: 'Ska du <span class="hl">vibe-coda</span> ditt projekt, eller anlita proffs?' }),
+      el('p', { class: 'ac-hero-sub' }, 'Du kan vibe-coda nästan vad som helst idag. Frågan är om det håller över tid. Svara på sju snabba frågor så får du svaret.'),
       el('div', null, el('button', { class: 'ac-cta', onClick: start }, 'Kom igång'))
     ]);
 
@@ -211,7 +182,7 @@
     ]);
 
     var ways = el('section', { class: 'ac-section' }, [
-      el('h2', { class: 'ac-h2' }, 'Fyra sätt att bygga det'),
+      el('h2', { class: 'ac-h2' }, 'Tre sätt att bygga det'),
       el('div', { class: 'ac-ways' }, L.ways.map(function (w, i) {
         return el('div', { class: 'ac-way' }, [
           el('div', { class: 'ac-way-no' }, '0' + (i + 1)),
@@ -232,7 +203,7 @@
 
     var closing = el('section', { class: 'ac-section ac-closing' }, [
       el('h2', { class: 'ac-h2' }, 'Redo att komma igång?'),
-      el('p', null, 'Ett par minuter. Inget säljsamtal. Du får svaret direkt.'),
+      el('p', null, 'Sju frågor. Inget säljsamtal. Vi mejlar svaret.'),
       el('button', { class: 'ac-cta', onClick: start }, 'Kom igång')
     ]);
 
@@ -370,19 +341,28 @@
       'path_name=' + encodeURIComponent(pathNames[lead])
     ];
     answers.forEach(function (a, n) { if (a) params.push('q' + (n + 1) + '=' + encodeURIComponent(a.label)); });
-    if (name) params.push('name=' + encodeURIComponent(name));
+    if (name) {
+      params.push('name=' + encodeURIComponent(name));
+      var np = name.trim().split(/\s+/);
+      params.push('first_name=' + encodeURIComponent(np.shift() || ''));
+      params.push('last_name=' + encodeURIComponent(np.join(' ')));
+    }
     if (details) params.push('details=' + encodeURIComponent(details));
     if (email) params.push('email=' + encodeURIComponent(email));
     return params.join('&');
   }
 
-  // INTEGRATION POINT — in production this is where the answers get POSTed to
-  // Angry Creative's CRM (GHL), tagged with the computed path, which triggers
-  // the recommendation email. The visitor never sees the recommendation here.
+  // INTEGRATION POINT — POSTar svaren till Angry Creatives GHL-webhook,
+  // taggas med rätt väg i GHL och triggar rekommendationsmejlet.
+  // Besökaren ser aldrig rekommendationen här.
   function submitToCRM(handoff) {
-    // Example:
-    // return fetch('https://your-crm-endpoint.example/intake?' + handoff, { method: 'POST' });
-    return Promise.resolve();
+    if (!GHL_WEBHOOK_URL) return Promise.resolve(); // demo-läge: skicka inget
+    return fetch(GHL_WEBHOOK_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+      body: handoff
+    }).catch(function () { /* fire-and-forget: svaret är opakt i no-cors */ });
   }
 
   function renderGate() {
@@ -490,12 +470,19 @@
     return el('div', { class: 'ac-quiz' }, el('div', { class: 'ac-card' }, form));
   }
 
+  var partialRec = {
+    self:  'att du kan vibe-coda det här själv',
+    proto: 'att börja själv och ta in hjälp när det ska bli skarpt',
+    qala:  'att ta in proffs som bygger det ordentligt'
+  };
+
   function showDone(email) {
+    var lead = leadKey(S.scores);
     var done = el('div', { class: 'ac-gate ac-gate-done' }, [
       el('div', { class: 'ac-done-check', 'aria-hidden': 'true' }, '✓'),
-      el('h2', null, 'Tack — det är inskickat'),
-      el('p', { class: 'sub', html: 'Vi mejlar din rekommendation till <b>' + (email || '') +
-        '</b>. I skarpt läge postas svaren till Angry Creatives CRM, taggas med rätt väg och triggar utskicket — inget visas här.' }),
+      el('h2', null, 'Tack!'),
+      el('p', { class: 'sub', html: 'Utifrån dina svar lutar det mot <b>' + partialRec[lead] + '</b>.' }),
+      el('p', { class: 'sub last', html: 'Vi mejlar en mer utförlig rekommendation till <b>' + (email || '') + '</b>.' }),
       el('button', { class: 'ac-restart', type: 'button', onClick: restart }, 'Börja om')
     ]);
     root.innerHTML = '';
@@ -517,13 +504,13 @@
   }
 
   function start() {
-    S.scores = { self: 0, proto: 0, agency: 0, fix: 0 };
+    S.scores = { self: 0, proto: 0, qala: 0 };
     S.idx = 0; S.answers = [];
     setScreen('quiz');
   }
 
   function restart() {
-    S.scores = { self: 0, proto: 0, agency: 0, fix: 0 };
+    S.scores = { self: 0, proto: 0, qala: 0 };
     S.idx = 0; S.answers = [];
     try { localStorage.removeItem(STORE); } catch (e) {}
     setScreen('landing');

@@ -40,7 +40,29 @@ python3 -m http.server 5500
 Serveras direkt från `main` / rot. Alla sökvägar är relativa, så det fungerar
 även under en projektsökväg (`https://<user>.github.io/<repo>/`).
 
-## Koppla in CRM
+## Koppla in GHL
 
-Formuläret bygger redan en GHL-handoff-sträng. Byt ut `submitToCRM()` i
-`assets/js/quiz.js` mot en riktig POST till er CRM-endpoint.
+Kopplingen är redan inbyggd. Öppna `assets/js/quiz.js` och klistra in er
+GHL Inbound Webhook-URL högst upp:
+
+```js
+var GHL_WEBHOOK_URL = ''; // <-- klistra in webhook-URL:en här
+```
+
+När fältet är ifyllt POSTar formuläret (vid "Maila rekommendation") en
+`application/x-www-form-urlencoded`-payload till webhooken. Är fältet tomt
+körs demo-läget (inget skickas, men "Tack"-skärmen visas ändå).
+
+Fält som skickas in:
+
+```
+email, first_name, last_name, name,
+path        (self | proto | qala)
+path_name   (läsbar väg, t.ex. "Bygg det på Qala")
+q1 … q10    (besökarens valda svar)
+details     (fritext om projektet)
+```
+
+I GHL: skapa en workflow med triggern **Inbound Webhook**, gör ett testsvar
+så fälten fångas, och bygg sedan stegen (Create/Update Contact → tagga på
+`path` → Send Email per väg).
