@@ -1,19 +1,8 @@
 (function () {
   "use strict";
 
-  /* === GHL-KOPPLING ================================================
-     Klistra in din GHL Inbound Webhook-URL mellan citattecknen nedan.
-     Tom sträng = demo-läge (inget skickas, "Tack"-skärmen visas ändå).
-     Hämtas i GHL: Automation → Workflows → ny workflow →
-     trigger "Inbound Webhook" → kopiera webhook-URL:en hit.
-     ================================================================= */
-var GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/NqFyczCDOfGfkFkZBRb3/webhook-trigger/0c9fb463-e456-42be-94e1-395e5c6ad386';
+  var GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/NqFyczCDOfGfkFkZBRb3/webhook-trigger/0c9fb463-e456-42be-94e1-395e5c6ad386';
 
-  /* =====================================================================
-     Data + scoring model — "Vibe eller proffs?".
-     Four paths; every answer carries hidden weights toward them. The live
-     results bar shows the distribution; the form gate computes the lead.
-     ===================================================================== */
   var paths = [
     { key: 'self',  lbl: 'Vibe-coda' },
     { key: 'proto', lbl: 'Delvis vibe' },
@@ -22,8 +11,8 @@ var GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/NqFyczCDOfGfkF
 
   var pathNames = {
     self:  'Vibe-coda det själv',
-    proto: 'Börja själv, vi tar över',
-    qala:  'Vi bygger det med Qala'
+    proto: 'Börja själv, anlita sedan proffs',
+    qala:  'Det bör byggas med Qala'
   };
 
   var questions = [
@@ -80,7 +69,7 @@ var GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/NqFyczCDOfGfkF
     ],
     forYou: [
       'Har vibe-codat något och undrar om det håller',
-      'Vill komma igång snabbt utan att fastna i tekniska detaljer',
+      'Vill komma igång snabbt utan att fastna på tekniska detaljer',
       'Har en idé du vill testa innan du satsar',
       'Vill veta när du bör bygga något som håller'
     ],
@@ -89,21 +78,18 @@ var GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/NqFyczCDOfGfkF
         sub: 'Bygg det själv med AI. Snabbt och billigt.',
         best: ['Experiment och interna grejer', 'Testa en idé innan du satsar'],
         trade: ['Inte byggt för att hålla länge', 'Svårt att skala och underhålla'] },
-      { h: 'Börja själv, vi tar över',
-        sub: 'Du kommer igång och validerar, sen bygger vi vidare och gör det stabilt.',
+      { h: 'Börja själv, anlita sedan proffs',
+        sub: 'Kom igång och testa idén själv, ta sedan in proffs som bygger det ordentligt.',
         best: ['Idéer som ska testas först', 'Komma igång nu utan att fastna'],
         trade: ['Prototypen byggs oftast om', 'Funkar bäst om du lämnar över i rätt läge'] },
-      { h: 'Vi tar hela bygget',
-        sub: 'Vi gör det ordentligt med Qala, så det håller och går att underhålla.',
+      { h: 'Anlita proffs',
+        sub: 'Bygg det ordentligt från start, på en grund som håller och går att underhålla.',
         best: ['Ska leva, växa och underhållas', 'Kräver säkerhet eller driftsäkerhet'],
-        trade: ['Större insats från start', 'Vi planerar tillsammans först'] }
+        trade: ['Större insats från start', 'Bör planeras ordentligt först'] }
     ],
     factors: ['Livslängd', 'Underhåll', 'Säkerhet', 'Skala', 'Budget', 'Hur kritiskt det är']
   };
 
-  /* ---------------------------------------------------------------------
-     Tiny DOM helpers — no framework, content is static & trusted.
-     --------------------------------------------------------------------- */
   function el(tag, attrs, kids) {
     var n = document.createElement(tag);
     if (attrs) for (var k in attrs) {
@@ -120,11 +106,8 @@ var GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/NqFyczCDOfGfkF
     return n;
   }
   var EMAIL_RE = /^\S+@\S+\.\S+$/;
-  var ADVANCE = 360; // 'standard' motion timing (locked default)
+  var ADVANCE = 360;
 
-  /* ---------------------------------------------------------------------
-     State + persistence (restores where the visitor left off).
-     --------------------------------------------------------------------- */
   var STORE = 'ac_quiz_v5';
   function loadState() {
     try { var s = JSON.parse(localStorage.getItem(STORE)); if (s && s.scores) return s; } catch (e) {}
@@ -144,9 +127,6 @@ var GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/NqFyczCDOfGfkF
   var lock = false;
   var root = document.getElementById('ac-root');
 
-  /* ---------------------------------------------------------------------
-     Scoring helpers.
-     --------------------------------------------------------------------- */
   function leadKey(scores) {
     var lead = paths[0].key, v = -1;
     paths.forEach(function (p) { if (scores[p.key] > v) { v = scores[p.key]; lead = p.key; } });
@@ -159,14 +139,11 @@ var GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/NqFyczCDOfGfkF
     return out;
   }
 
-  /* =====================================================================
-     LANDING
-     ===================================================================== */
   function renderLanding() {
     var L = landing;
 
     var hero = el('section', { class: 'ac-hero' }, [
-      el('h1', { class: 'ac-h1', html: 'Ska du <span class="hl">vibe-coda</span> ditt projekt, eller anlita proffs?' }),
+      el('h1', { class: 'ac-h1', html: 'Ska du <span class="hl">vibe-coda</span> ditt projekt eller anlita proffs?' }),
       el('p', { class: 'ac-hero-sub' }, 'Du kan vibe-coda nästan vad som helst idag. Frågan är om det håller över tid. Svara på sju snabba frågor så får du svaret.'),
       el('div', null, el('button', { class: 'ac-cta', onClick: start }, 'Kom igång'))
     ]);
@@ -210,10 +187,7 @@ var GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/NqFyczCDOfGfkF
     return el('div', { class: 'ac-landing' }, [hero, values, forYou, ways, factors, closing]);
   }
 
-  /* =====================================================================
-     QUIZ — live results bar + question card
-     ===================================================================== */
-  var barFills = {}, barSegs = {}, barPcts = {}; // refs so the bar animates in place
+  var barFills = {}, barSegs = {}, barPcts = {};
 
   function buildBar() {
     barFills = {}; barSegs = {}; barPcts = {};
@@ -244,12 +218,12 @@ var GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/NqFyczCDOfGfkF
     });
   }
 
-  var cardHolder; // persistent container; the card element inside is swapped to retrigger the transition
+  var cardHolder;
 
   function renderCard() {
     var item = questions[S.idx];
     var prevSel = (S.answers[S.idx] && S.answers[S.idx].i != null) ? S.answers[S.idx].i : -1;
-    var picked = prevSel; // local guard against double-pick during the advance delay
+    var picked = prevSel;
 
     var opts = el('div', { class: 'ac-opts card-outline' }, item.opts.map(function (o, i) {
       var btn = el('button', {
@@ -332,9 +306,6 @@ var GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/NqFyczCDOfGfkF
     window.scrollTo(0, 0);
   }
 
-  /* =====================================================================
-     FORM GATE — all fields required, inline validation, no on-screen result
-     ===================================================================== */
   function buildHandoff(lead, answers, name, details, email) {
     var params = [
       'path=' + encodeURIComponent(lead),
@@ -352,17 +323,14 @@ var GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/NqFyczCDOfGfkF
     return params.join('&');
   }
 
-  // INTEGRATION POINT — POSTar svaren till Angry Creatives GHL-webhook,
-  // taggas med rätt väg i GHL och triggar rekommendationsmejlet.
-  // Besökaren ser aldrig rekommendationen här.
   function submitToCRM(handoff) {
-    if (!GHL_WEBHOOK_URL) return Promise.resolve(); // demo-läge: skicka inget
+    if (!GHL_WEBHOOK_URL) return Promise.resolve();
     return fetch(GHL_WEBHOOK_URL, {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
       body: handoff
-    }).catch(function () { /* fire-and-forget: svaret är opakt i no-cors */ });
+    }).catch(function () {  });
   }
 
   function renderGate() {
@@ -379,7 +347,6 @@ var GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/NqFyczCDOfGfkF
       return e;
     }
 
-    // refs we update imperatively (so typing never loses focus)
     var refs = {};
 
     function field(id, labelText, kind) {
@@ -418,25 +385,6 @@ var GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/NqFyczCDOfGfkF
     var submitBtn = el('button', { class: 'ac-submit', type: 'button' }, 'Maila rekommendation');
     var backBtn = el('button', { class: 'ac-back', type: 'button', onClick: onBack }, '← Tillbaka till frågorna');
 
-    // dev preview of the CRM handoff string (hidden from the visitor)
-    var devBody = el('div', { class: 'ac-dev-body' });
-    devBody.hidden = true;
-    var devOpen = false;
-    var devToggle = el('button', { class: 'ac-dev-toggle', type: 'button', html: '▸ Dev-preview <span>(visas ej för besökaren)</span>' });
-    function renderDev() {
-      devBody.innerHTML = '';
-      devBody.appendChild(el('div', { class: 'path', html: 'Beräknad väg: <b>' + pathNames[lead] + '</b>' }));
-      devBody.appendChild(el('div', { class: 'k' }, 'Skickas till GHL som:'));
-      devBody.appendChild(el('code', null, '?' + buildHandoff(lead, S.answers, state.name, state.details, state.email)));
-    }
-    devToggle.addEventListener('click', function () {
-      devOpen = !devOpen;
-      devToggle.innerHTML = (devOpen ? '▾' : '▸') + ' Dev-preview <span>(visas ej för besökaren)</span>';
-      devBody.hidden = !devOpen;
-      if (devOpen) renderDev();
-    });
-    var dev = el('div', { class: 'ac-dev' }, [devToggle, devBody]);
-
     function refresh() {
       var e = errs();
       ['name', 'email', 'details', 'consent'].forEach(function (f) {
@@ -446,7 +394,6 @@ var GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/NqFyczCDOfGfkF
         r.err.textContent = show || '';
         r.err.style.display = show ? '' : 'none';
       });
-      if (devOpen) renderDev();
     }
 
     submitBtn.addEventListener('click', function () {
@@ -464,7 +411,7 @@ var GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/NqFyczCDOfGfkF
       el('p', { class: 'sub' }, 'Berätta kort om projektet så blir rekommendationen mer träffsäker. Vi mejlar resultatet till dig.'),
       nameF, emailF, detailsF,
       consentLabel, consentErr,
-      submitBtn, backBtn, dev
+      submitBtn, backBtn
     ]);
 
     return el('div', { class: 'ac-quiz' }, el('div', { class: 'ac-card' }, form));
@@ -472,7 +419,7 @@ var GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/NqFyczCDOfGfkF
 
   var partialRec = {
     self:  'att du kan vibe-coda det här själv',
-    proto: 'att börja själv och ta in hjälp när det ska bli skarpt',
+    proto: 'att börja själv och ta in hjälp när det ska göras ordentligt',
     qala:  'att ta in proffs som bygger det ordentligt'
   };
 
@@ -490,9 +437,6 @@ var GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/NqFyczCDOfGfkF
     window.scrollTo(0, 0);
   }
 
-  /* =====================================================================
-     Navigation
-     ===================================================================== */
   function setScreen(name) {
     S.screen = name;
     persist();
@@ -516,11 +460,9 @@ var GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/NqFyczCDOfGfkF
     setScreen('landing');
   }
 
-  // Logo always returns to the landing page (progress is kept in storage).
   document.getElementById('ac-logo').addEventListener('click', function () {
     setScreen('landing');
   });
 
-  // Initial mount — restore where the visitor left off.
   setScreen(S.screen);
 })();
