@@ -80,7 +80,7 @@ var GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/NqFyczCDOfGfkF
     ],
     forYou: [
       'Har vibe-codat något och undrar om det håller',
-      'Vill komma igång snabbt utan teknisk skuld',
+      'Vill komma igång snabbt utan att fastna i tekniska detaljer',
       'Har en idé du vill testa innan du satsar',
       'Vill veta när du bör bygga något som håller'
     ],

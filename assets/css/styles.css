@@ -11,7 +11,6 @@
   --u:8px;
 }
 *{box-sizing:border-box;}
-html{scrollbar-gutter:stable both-edges;}
 html,body{margin:0;padding:0;}
 body{font-family:var(--body);background:var(--page);color:var(--ink);
   -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
@@ -25,7 +24,13 @@ body{font-family:var(--body);background:var(--page);color:var(--ink);
 .ac-header{display:flex;align-items:center;justify-content:space-between;
   padding:20px clamp(24px,4vw,56px);width:min(1080px,100%);margin:0 auto;}
 .ac-logo{display:flex;align-items:center;gap:10px;text-decoration:none;cursor:pointer;background:none;border:none;padding:0;}
-.ac-logo img{height:32px;width:auto;display:block;}
+.ac-logo img{height:55px;width:auto;display:block;}
+.ac-topbar{background:var(--coral);width:100%;}
+.ac-topbar-inner{width:min(1080px,100%);margin:0 auto;padding:10px clamp(24px,4vw,56px);display:flex;justify-content:center;align-items:center;gap:36px;flex-wrap:wrap;}
+.ac-topbar-item{display:inline-flex;align-items:center;gap:8px;color:#fff;text-decoration:none;font-size:14px;font-weight:700;letter-spacing:.01em;line-height:1;}
+.ac-topbar-item svg{width:15px;height:15px;flex:none;}
+.ac-topbar-item:hover{opacity:.88;}
+
 .ac-header .tag{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--muted);
   text-transform:uppercase;}
 .ac-footer{position:fixed;left:0;right:0;bottom:0;z-index:50;text-align:center;
