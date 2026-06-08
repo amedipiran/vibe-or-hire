@@ -16,11 +16,23 @@
   };
 
   var questions = [
-    { q: 'Vad är det för projekt?', opts: [
-      { ol: 'Ett experiment eller en intern grej', od: 'Mest för mig eller teamet', w: { self: 3 } },
-      { ol: 'En idé jag vill testa på riktiga användare', od: 'Validera innan jag satsar', w: { proto: 3, self: 1 } },
-      { ol: 'Något som ska bli en del av verksamheten', od: 'Ska användas på riktigt', w: { qala: 3, proto: 1 } },
-      { ol: 'En kundvänd sajt eller webbshop som ska leva', od: '', w: { qala: 4 } }
+    { q: 'Vad är det du bygger?', opts: [
+      { ol: 'En webbshop eller e-handel', od: '', w: { qala: 3, proto: 1 } },
+      { ol: 'En hemsida eller innehållssajt', od: '', w: { qala: 2, proto: 1 } },
+      { ol: 'En medlems- eller kurssajt', od: 'Community, kurser eller inloggat innehåll', w: { qala: 2, proto: 1 } },
+      { ol: 'En webbapp, ett verktyg eller en SaaS', od: 'Inte en WordPress-sajt', w: { self: 1, proto: 2 }, qf: false },
+      { ol: 'Ett experiment eller en intern grej', od: '', w: { self: 3 } }
+    ] },
+    { q: 'Ska du sälja något eller ta betalt online?', opts: [
+      { ol: 'Ja, en webbshop med många produkter', od: '', w: { qala: 3 } },
+      { ol: 'Ja, men bara några få produkter eller tjänster', od: '', w: { qala: 2, proto: 1 } },
+      { ol: 'Nej, men inloggning eller medlemskap', od: '', w: { qala: 2, proto: 1 } },
+      { ol: 'Nej, mest innehåll och information', od: '', w: { proto: 1, self: 1 } }
+    ] },
+    { q: 'Ska det finnas på flera språk eller marknader?', opts: [
+      { ol: 'Ja, flera länder eller språk', od: '', w: { qala: 3 } },
+      { ol: 'Kanske längre fram', od: '', w: { qala: 1, proto: 1 } },
+      { ol: 'Nej, en marknad räcker', od: '', w: { self: 1 } }
     ] },
     { q: 'Hur länge ska det leva?', opts: [
       { ol: 'Dagar eller veckor, sen slänger jag det', od: '', w: { self: 3 } },
@@ -41,15 +53,15 @@
       { ol: 'Betalande kunder', od: '', w: { proto: 1, qala: 2 } },
       { ol: 'Många, och det ska kunna växa', od: '', w: { qala: 4 } }
     ] },
-    { q: 'Hanterar det känslig data eller betalningar?', opts: [
+    { q: 'Hanterar det känsliga uppgifter eller inloggningar?', opts: [
       { ol: 'Nej', od: '', w: { self: 3, proto: 1 } },
       { ol: 'Lite intern data', od: '', w: { self: 1, proto: 1, qala: 1 } },
       { ol: 'Kundkonton och inloggningar', od: '', w: { qala: 3 } },
-      { ol: 'Betalningar eller känsliga uppgifter', od: '', w: { qala: 4 } }
+      { ol: 'Personuppgifter eller känslig information', od: '', w: { qala: 4 } }
     ] },
     { q: 'Har du redan vibe-codat något?', opts: [
-      { ol: 'Nej, inte än', od: 'Lovable, Bolt, Cursor, v0, Replit …', w: { qala: 1, proto: 1 } },
-      { ol: 'Pillat lite', od: '', w: { self: 2, proto: 1 } },
+      { ol: 'Nej, inte än', od: '', w: { qala: 1, proto: 1 } },
+      { ol: 'Pillat lite', od: 'Lovable, Bolt, Cursor, v0, Replit …', w: { self: 2, proto: 1 } },
       { ol: 'Byggt en prototyp', od: '', w: { proto: 3, self: 1 } },
       { ol: 'Byggt något men vill ta det vidare', od: '', w: { proto: 2, qala: 2 } }
     ] },
@@ -69,7 +81,7 @@
     ],
     forYou: [
       'Har vibe-codat något och undrar om det håller',
-      'Vill komma igång snabbt utan att fastna på tekniska detaljer',
+      'Vill komma igång snabbt utan teknisk skuld',
       'Har en idé du vill testa innan du satsar',
       'Vill veta när du bör bygga något som håller'
     ],
@@ -83,7 +95,7 @@
         best: ['Idéer som ska testas först', 'Komma igång nu utan att fastna'],
         trade: ['Prototypen byggs oftast om', 'Funkar bäst om du lämnar över i rätt läge'] },
       { h: 'Anlita proffs',
-        sub: 'Bygg det ordentligt från start, på en grund som håller och går att underhålla.',
+        sub: 'Vi bygger det åt dig, med AI där det hjälper, men ordentligt så det håller och går att underhålla.',
         best: ['Ska leva, växa och underhållas', 'Kräver säkerhet eller driftsäkerhet'],
         trade: ['Större insats från start', 'Bör planeras ordentligt först'] }
     ],
@@ -137,6 +149,12 @@
     var out = {};
     paths.forEach(function (p) { out[p.key] = total > 0 ? Math.round(scores[p.key] / total * 100) : 0; });
     return out;
+  }
+  function isQalaFit() {
+    var a = S.answers[0];
+    if (!a || a.i == null) return true;
+    var opt = questions[0].opts[a.i];
+    return !opt || opt.qf !== false;
   }
 
   function renderLanding() {
@@ -307,14 +325,20 @@
   }
 
   function buildHandoff(lead, answers, name, details, email) {
+    var fit = isQalaFit();
+    var pname = (lead === 'qala' && !fit) ? 'Anlita proffs' : pathNames[lead];
     var params = [
       'path=' + encodeURIComponent(lead),
-      'path_name=' + encodeURIComponent(pathNames[lead])
+      'path_name=' + encodeURIComponent(pname),
+      'qala_fit=' + (fit ? 'yes' : 'no')
     ];
     answers.forEach(function (a, n) { if (a) params.push('q' + (n + 1) + '=' + encodeURIComponent(a.label)); });
     if (name) {
-      params.push('name=' + encodeURIComponent(name));
-      var np = name.trim().split(/\s+/);
+      var clean = name.trim().replace(/\s+/g, ' ');
+      var capWord = function (s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; };
+      var cap = clean.split(' ').map(capWord).join(' ');
+      var np = cap.split(' ');
+      params.push('name=' + encodeURIComponent(cap));
       params.push('first_name=' + encodeURIComponent(np.shift() || ''));
       params.push('last_name=' + encodeURIComponent(np.join(' ')));
     }
@@ -375,7 +399,7 @@
     consentErr.style.display = 'none';
     var consentLabel = el('label', { class: 'ac-consent' }, [
       consentInput,
-      el('span', { html: 'Jag godkänner att Angry Creative får kontakta mig om mitt resultat och relevanta tjänster. <span class="req">*</span>' })
+      el('span', { html: 'Ja, jag vill att Angry Creative kontaktar mig om mitt resultat och relevanta tjänster. <span class="req">*</span>' })
     ]);
     consentInput.addEventListener('change', function () {
       state.consent = consentInput.checked; state.touched.consent = true; refresh();
