@@ -430,7 +430,7 @@
 
     var form = el('div', { class: 'ac-gate' }, [
       el('h2', null, 'Nästan klar'),
-      el('p', { class: 'sub' }, isApp ? 'Lämna dina uppgifter och en kort beskrivning, så hör vi av oss om vi kan peka dig rätt.' : 'Berätta kort om projektet så blir rekommendationen mer träffsäker. Vi mejlar resultatet till dig.'),
+      el('p', { class: 'sub' }, isApp ? 'Lämna din mejl och en kort beskrivning, så skickar vi ett par tips som kan hjälpa dig vidare.' : 'Berätta kort om projektet så blir rekommendationen mer träffsäker. Vi mejlar resultatet till dig.'),
       nameF, emailF, detailsF,
       consentLabel, consentErr,
       submitBtn, backBtn
@@ -452,7 +452,7 @@
       kids = [
         el('h2', null, 'Tack!'),
         el('p', { class: 'sub' }, 'Det här ligger utanför vad vi vanligtvis bygger. Vi fokuserar på webbplatser och e-handel i WordPress och WooCommerce.'),
-        el('p', { class: 'sub last', html: 'Vi hör av oss till <b>' + (email || '') + '</b> om vi kan peka dig rätt.' }),
+        el('p', { class: 'sub last', html: 'Vi mejlar ett par tips till <b>' + (email || '') + '</b> som kan hjälpa dig vidare.' }),
         el('button', { class: 'ac-restart', type: 'button', onClick: restart }, 'Börja om')
       ];
     } else {
