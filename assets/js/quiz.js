@@ -16,63 +16,85 @@
     app:   'Utanför vårt fokus'
   };
 
-  var questions = [
-    { q: 'Vad är det du bygger?', opts: [
-      { ol: 'En webbshop eller e-handel', od: '', w: { qala: 3, proto: 1 } },
-      { ol: 'En hemsida eller innehållssajt', od: '', w: { qala: 2, proto: 1 } },
-      { ol: 'En medlems- eller kurssajt', od: 'Community, kurser eller inloggat innehåll', w: { qala: 2, proto: 1 } },
-      { ol: 'En webbapp, ett verktyg eller en SaaS', od: 'Inte en WordPress-sajt', app: true },
-      { ol: 'Ett experiment eller en intern grej', od: '', w: { self: 3 } }
+  var generic = [
+    { id: 'bygger', q: 'Vad är det du bygger?', opts: [
+      { ol: 'En webbshop eller e-handel', od: '', route: 'site', w: { qala: 3, proto: 1 } },
+      { ol: 'En hemsida eller innehållssajt', od: '', route: 'site', w: { qala: 2, proto: 1 } },
+      { ol: 'En medlems- eller kurssajt', od: 'Community, kurser eller inloggat innehåll', route: 'site', w: { qala: 2, proto: 1 } },
+      { ol: 'En webbapp, ett verktyg eller en SaaS', od: 'Inte en WordPress-sajt', route: 'app', app: true },
+      { ol: 'Ett experiment eller en intern grej', od: '', route: 'experiment', w: { self: 3 } }
     ] },
-    { q: 'Hur länge ska det leva?', opts: [
+    { id: 'livslangd', q: 'Hur länge ska det leva?', opts: [
       { ol: 'Dagar eller veckor, sen slänger jag det', od: '', w: { self: 3 } },
       { ol: 'Några månader', od: '', w: { self: 2, proto: 2 } },
       { ol: 'Ett par år', od: '', w: { proto: 2, qala: 1 } },
       { ol: 'Långsiktigt, det ska bara funka', od: '', w: { qala: 3 } },
-      { ol: 'Det ska bli en central del av företaget', od: '', w: { qala: 4 } }
+      { ol: 'Det ska bli en central del av verksamheten', od: '', w: { qala: 4 } }
     ] },
-    { q: 'Vem ska underhålla det sen?', opts: [
+    { id: 'underhall', q: 'Vem ska underhålla det sen?', opts: [
       { ol: 'Ingen, det är en engångsgrej', od: '', w: { self: 3 } },
       { ol: 'Jag själv, så länge det behövs', od: '', w: { self: 2, proto: 1 } },
       { ol: 'Vi internt, men ingen är utvecklare', od: '', w: { proto: 1, qala: 2 } },
       { ol: 'Det måste kunna tas över och vidareutvecklas', od: '', w: { qala: 4 } }
     ] },
-    { q: 'Hur många ska använda det?', opts: [
-      { ol: 'Bara jag eller några få', od: '', w: { self: 3 } },
-      { ol: 'Ett internt team', od: '', w: { self: 1, proto: 2 } },
-      { ol: 'Betalande kunder', od: '', w: { proto: 1, qala: 2 } },
-      { ol: 'Många, och det ska kunna växa', od: '', w: { qala: 4 } }
-    ] },
-    { q: 'Hanterar det känsliga uppgifter eller inloggningar?', opts: [
-      { ol: 'Nej', od: '', w: { self: 3, proto: 1 } },
-      { ol: 'Lite intern data', od: '', w: { self: 1, proto: 1, qala: 1 } },
-      { ol: 'Kundkonton och inloggningar', od: '', w: { qala: 3 } },
-      { ol: 'Personuppgifter eller känslig information', od: '', w: { qala: 4 } }
-    ] },
-    { q: 'Har du redan vibe-codat något?', opts: [
+    { id: 'vibecode', q: 'Har du redan vibe-codat något?', opts: [
       { ol: 'Nej, inte än', od: '', w: { qala: 1, proto: 1 } },
       { ol: 'Pillat lite', od: 'Lovable, Bolt, Cursor, v0, Replit …', w: { self: 2, proto: 1 } },
       { ol: 'Byggt en prototyp', od: '', w: { proto: 3, self: 1 } },
       { ol: 'Byggt något men vill ta det vidare', od: '', w: { proto: 2, qala: 2 } }
     ] },
-    { q: 'Vad är viktigast just nu?', opts: [
+    { id: 'viktigast', q: 'Vad är viktigast just nu?', opts: [
       { ol: 'Komma igång snabbt och billigt', od: '', w: { self: 3 } },
       { ol: 'Testa om idén håller', od: '', w: { proto: 3 } },
       { ol: 'Att det håller över tid', od: '', w: { qala: 3 } },
       { ol: 'Att det är tryggt och kan skalas', od: '', w: { qala: 3 } }
-    ] },
-    { q: 'Ska du sälja något eller ta betalt online?', opts: [
-      { ol: 'Ja, en webbshop med många produkter', od: '', w: { qala: 3 } },
-      { ol: 'Ja, men bara några få produkter eller tjänster', od: '', w: { qala: 2, proto: 1 } },
-      { ol: 'Nej, men inloggning eller medlemskap', od: '', w: { qala: 2, proto: 1 } },
-      { ol: 'Nej, mest innehåll och information', od: '', w: { proto: 1, self: 1 } }
-    ] },
-    { q: 'Ska det finnas på flera språk eller marknader?', opts: [
-      { ol: 'Ja, flera länder eller språk', od: '', w: { qala: 3 } },
-      { ol: 'Kanske längre fram', od: '', w: { qala: 1, proto: 1 } },
-      { ol: 'Nej, en marknad räcker', od: '', w: { self: 1 } }
     ] }
   ];
+
+  var specific = {
+    site: [
+      { id: 'saljer', q: 'Ska du sälja något eller ta betalt online?', opts: [
+        { ol: 'Ja, en webbshop med många produkter', od: '', w: { qala: 4 } },
+        { ol: 'Ja, men bara några få produkter eller tjänster', od: '', w: { qala: 2, proto: 1 } },
+        { ol: 'Nej, men inloggning eller medlemskap', od: '', w: { qala: 2, proto: 1 } },
+        { ol: 'Nej, mest innehåll och information', od: '', w: { proto: 1, self: 1 } }
+      ] },
+      { id: 'marknader', q: 'Ska det finnas på flera språk eller marknader?', opts: [
+        { ol: 'Ja, flera länder eller språk', od: '', w: { qala: 3 } },
+        { ol: 'Kanske längre fram', od: '', w: { qala: 1, proto: 1 } },
+        { ol: 'Nej, en marknad räcker', od: '', w: { self: 1, proto: 1 } }
+      ] },
+      { id: 'integrationer', q: 'Behöver det kopplas ihop med andra system?', opts: [
+        { ol: 'Ja, betalning och affärssystem', od: 'Klarna, lager, ERP, bokning …', w: { qala: 4 } },
+        { ol: 'Bara betalning', od: '', w: { qala: 2, proto: 1 } },
+        { ol: 'Nej, det står för sig själv', od: '', w: { proto: 1, self: 1 } }
+      ] },
+      { id: 'redaktor', q: 'Vem ska uppdatera innehållet löpande?', opts: [
+        { ol: 'Vi själva, utan att behöva en utvecklare', od: '', w: { qala: 3 } },
+        { ol: 'En utvecklare eller byrå sköter det', od: '', w: { qala: 1, proto: 1 } },
+        { ol: 'Det behöver knappt ändras', od: '', w: { self: 1, proto: 1 } }
+      ] },
+      { id: 'migrering', q: 'Byter du från en befintlig sajt eller plattform?', opts: [
+        { ol: 'Ja, vi flyttar från en befintlig lösning', od: 'Shopify, Wix, äldre WordPress …', w: { qala: 3 } },
+        { ol: 'Nej, vi börjar från noll', od: '', w: { proto: 1, qala: 1 } },
+        { ol: 'Vet inte än', od: '', w: { proto: 1 } }
+      ] }
+    ],
+    app: [
+      { id: 'appfunktion', q: 'Vad ska den i grunden göra?', opts: [
+        { ol: 'Automatisera eller koppla ihop verktyg', od: '', w: {} },
+        { ol: 'Hantera data, flöden eller logik', od: '', w: {} },
+        { ol: 'Erbjuda konton, dashboard eller en tjänst', od: '', w: {} },
+        { ol: 'Något annat', od: '', w: {} }
+      ] },
+      { id: 'anvandare', q: 'Vilka ska använda den?', opts: [
+        { ol: 'Bara vi internt', od: '', w: {} },
+        { ol: 'Våra kunder', od: '', w: {} },
+        { ol: 'Öppet för vem som helst', od: '', w: {} }
+      ] }
+    ],
+    experiment: []
+  };
 
   var landing = {
     values: [
@@ -82,7 +104,7 @@
     ],
     forYou: [
       'Har vibe-codat något och undrar om det håller',
-      'Vill komma igång snabbt utan teknisk skuld',
+      'Vill komma igång snabbt utan att fastna i teknik',
       'Har en idé du vill testa innan du satsar',
       'Vill veta när du bör bygga något som håller'
     ],
@@ -121,40 +143,58 @@
   var EMAIL_RE = /^\S+@\S+\.\S+$/;
   var ADVANCE = 360;
 
-  var STORE = 'ac_quiz_v7';
+  var STORE = 'ac_quiz_v8';
   function loadState() {
-    try { var s = JSON.parse(localStorage.getItem(STORE)); if (s && s.scores) return s; } catch (e) {}
+    try { var s = JSON.parse(localStorage.getItem(STORE)); if (s && s.ans) return s; } catch (e) {}
     return null;
   }
   function persist() {
-    try { localStorage.setItem(STORE, JSON.stringify({ screen: S.screen, idx: S.idx, scores: S.scores, answers: S.answers })); } catch (e) {}
+    try { localStorage.setItem(STORE, JSON.stringify({ screen: S.screen, pos: S.pos, ans: S.ans })); } catch (e) {}
   }
 
   var saved = loadState();
   var S = {
     screen: saved ? saved.screen : 'landing',
-    idx: saved ? saved.idx : 0,
-    scores: saved ? saved.scores : { self: 0, proto: 0, qala: 0 },
-    answers: saved ? saved.answers : []
+    pos: saved ? saved.pos : 0,
+    ans: saved ? saved.ans : {}
   };
   var lock = false;
   var root = document.getElementById('ac-root');
 
-  function leadKey(scores) {
+  function routeOf() {
+    var a = S.ans[generic[0].id];
+    if (!a) return null;
+    var o = generic[0].opts[a.i];
+    return (o && o.route) || null;
+  }
+  function flow() {
+    var f = generic.slice();
+    var r = routeOf();
+    if (r && specific[r]) f = f.concat(specific[r]);
+    return f;
+  }
+  function scores() {
+    var sc = { self: 0, proto: 0, qala: 0 };
+    flow().forEach(function (qq) {
+      var a = S.ans[qq.id];
+      if (a && a.w) for (var k in a.w) sc[k] += a.w[k];
+    });
+    return sc;
+  }
+  function leadKey(sc) {
     var lead = paths[0].key, v = -1;
-    paths.forEach(function (p) { if (scores[p.key] > v) { v = scores[p.key]; lead = p.key; } });
+    paths.forEach(function (p) { if (sc[p.key] > v) { v = sc[p.key]; lead = p.key; } });
     return lead;
   }
-  function pcts(scores) {
-    var total = paths.reduce(function (s, p) { return s + scores[p.key]; }, 0);
+  function pcts(sc) {
+    var total = paths.reduce(function (s, p) { return s + sc[p.key]; }, 0);
     var out = {};
-    paths.forEach(function (p) { out[p.key] = total > 0 ? Math.round(scores[p.key] / total * 100) : 0; });
+    paths.forEach(function (p) { out[p.key] = total > 0 ? Math.round(sc[p.key] / total * 100) : 0; });
     return out;
   }
   function currentLead() {
-    var a = S.answers[0];
-    if (a && a.i != null && questions[0].opts[a.i] && questions[0].opts[a.i].app) return 'app';
-    return leadKey(S.scores);
+    if (routeOf() === 'app') return 'app';
+    return leadKey(scores());
   }
 
   function renderLanding() {
@@ -205,7 +245,7 @@
     return el('div', { class: 'ac-landing' }, [hero, values, forYou, ways, factors, closing]);
   }
 
-  var barFills = {}, barSegs = {}, barPcts = {};
+  var barWrap = null, barFills = {}, barSegs = {}, barPcts = {};
 
   function buildBar() {
     barFills = {}; barSegs = {}; barPcts = {};
@@ -220,14 +260,17 @@
       barFills[p.key] = fill; barSegs[p.key] = seg; barPcts[p.key] = pct;
       return seg;
     });
-    return el('div', { class: 'ac-bar-wrap' },
+    barWrap = el('div', { class: 'ac-bar-wrap' },
       el('div', { class: 'ac-bar', role: 'img', 'aria-label': 'Fördelning mellan vägarna' }, segs));
+    return barWrap;
   }
 
   function updateBar() {
-    var p = pcts(S.scores);
-    var lead = leadKey(S.scores);
-    var hasData = paths.some(function (x) { return S.scores[x.key] > 0; });
+    if (!barWrap) return;
+    var sc = scores();
+    var p = pcts(sc);
+    var lead = leadKey(sc);
+    var hasData = paths.some(function (x) { return sc[x.key] > 0; });
     paths.forEach(function (path) {
       var isLead = hasData && path.key === lead;
       barFills[path.key].style.width = p[path.key] + '%';
@@ -239,17 +282,20 @@
   var cardHolder;
 
   function renderCard() {
-    var item = questions[S.idx];
-    var prevSel = (S.answers[S.idx] && S.answers[S.idx].i != null) ? S.answers[S.idx].i : -1;
-    var picked = prevSel;
+    var f = flow();
+    if (S.pos >= f.length) { setScreen('gate'); return; }
+    var item = f[S.pos];
+    var prev = S.ans[item.id];
+    var prevSel = (prev && prev.i != null) ? prev.i : -1;
 
     var opts = el('div', { class: 'ac-opts card-outline' }, item.opts.map(function (o, i) {
       var btn = el('button', {
         class: 'ac-opt' + (prevSel === i ? ' is-selected' : ''),
         type: 'button',
         onClick: function () {
-          if (picked !== -1) return;
-          picked = i;
+          if (lock) return;
+          var sibs = opts.querySelectorAll('.ac-opt');
+          for (var s = 0; s < sibs.length; s++) sibs[s].classList.remove('is-selected');
           btn.classList.add('is-selected');
           onAnswer(i);
         }
@@ -263,37 +309,47 @@
       return btn;
     }));
 
+    var pct = f.length ? (S.pos / f.length * 100) : 0;
+
     var card = el('div', { class: 'ac-qcard' }, [
-      el('div', { class: 'ac-qnum' }, [
-        el('span', { class: 'n' }, 'Fråga ' + (S.idx + 1)),
-        el('span', { class: 'of' }, ' av ' + questions.length),
-        el('span', { class: 'ac-qbar' }, el('span', { style: 'width:' + (S.idx / questions.length * 100) + '%' }))
-      ]),
+      el('div', { class: 'ac-qnum' },
+        el('span', { class: 'ac-qbar' }, el('span', { style: 'width:' + pct + '%' }))
+      ),
       el('h2', { class: 'ac-q' }, item.q),
       opts,
-      el('button', { class: 'ac-back', type: 'button', onClick: onBack }, S.idx > 0 ? '← Tillbaka' : '← Till startsidan')
+      el('button', { class: 'ac-back', type: 'button', onClick: onBack }, S.pos > 0 ? '← Tillbaka' : '← Till startsidan')
     ]);
 
     cardHolder.innerHTML = '';
     cardHolder.appendChild(card);
+    updateBar();
   }
 
   function renderQuiz() {
     cardHolder = el('div', { class: 'ac-card' });
-    var wrap = el('div', { class: 'ac-quiz' }, [buildBar(), cardHolder]);
-    return wrap;
+    return el('div', { class: 'ac-quiz' }, [buildBar(), cardHolder]);
   }
 
   function onAnswer(i) {
     if (lock) return;
     lock = true;
-    var o = questions[S.idx].opts[i];
-    if (o.w) for (var k in o.w) S.scores[k] += o.w[k];
-    S.answers[S.idx] = { i: i, w: o.w || {}, label: o.ol };
+    var f = flow();
+    var item = f[S.pos];
+    var o = item.opts[i];
+    var prevRoute = routeOf();
+    S.ans[item.id] = { i: i, label: o.ol, w: o.w || {} };
+
+    if (item.id === generic[0].id && routeOf() !== prevRoute) {
+      var keep = {};
+      flow().forEach(function (qq) { if (S.ans[qq.id]) keep[qq.id] = S.ans[qq.id]; });
+      S.ans = keep;
+    }
+
     updateBar();
     persist();
     setTimeout(function () {
-      if (S.idx + 1 < questions.length) { S.idx++; renderCard(); persist(); }
+      var ff = flow();
+      if (S.pos + 1 < ff.length) { S.pos++; renderCard(); persist(); }
       else { setScreen('gate'); }
       lock = false;
     }, ADVANCE);
@@ -301,35 +357,31 @@
 
   function onBack() {
     if (S.screen === 'gate') {
-      var last = questions.length - 1;
-      var prevG = S.answers[last];
-      if (prevG) {
-        for (var k in prevG.w) S.scores[k] -= prevG.w[k];
-        S.answers[last] = null;
-      }
-      S.idx = last;
+      S.pos = Math.max(0, flow().length - 1);
       setScreen('quiz');
       return;
     }
-    if (S.idx === 0) { setScreen('landing'); return; }
-    var prev = S.answers[S.idx - 1];
-    if (prev) {
-      for (var j in prev.w) S.scores[j] -= prev.w[j];
-      S.answers[S.idx - 1] = null;
-    }
-    S.idx--;
+    if (S.pos === 0) { setScreen('landing'); return; }
+    S.pos--;
     renderCard();
-    updateBar();
     persist();
     window.scrollTo(0, 0);
   }
 
-  function buildHandoff(lead, answers, name, details, email) {
+  function buildHandoff(lead, name, details, email) {
     var params = [
       'path=' + encodeURIComponent(lead),
       'path_name=' + encodeURIComponent(pathNames[lead] || '')
     ];
-    answers.forEach(function (a, n) { if (a) params.push('q' + (n + 1) + '=' + encodeURIComponent(a.label)); });
+    var lines = [];
+    flow().forEach(function (qq) {
+      var a = S.ans[qq.id];
+      if (a) {
+        params.push(qq.id + '=' + encodeURIComponent(a.label));
+        lines.push(qq.q + '\n- ' + a.label);
+      }
+    });
+    params.push('svar=' + encodeURIComponent(lines.join('\n\n')));
     if (name) {
       var clean = name.trim().replace(/\s+/g, ' ');
       var capWord = function (s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; };
@@ -422,7 +474,7 @@
       state.attempted = true;
       refresh();
       if (Object.keys(errs()).length === 0) {
-        var handoff = buildHandoff(lead, S.answers, state.name, state.details, state.email);
+        var handoff = buildHandoff(lead, state.name, state.details, state.email);
         submitToCRM(handoff);
         showDone(state.email);
       }
@@ -474,20 +526,18 @@
     persist();
     root.innerHTML = '';
     if (name === 'landing') root.appendChild(renderLanding());
-    else if (name === 'quiz') { root.appendChild(renderQuiz()); renderCard(); updateBar(); }
+    else if (name === 'quiz') { root.appendChild(renderQuiz()); renderCard(); }
     else if (name === 'gate') root.appendChild(renderGate());
     window.scrollTo(0, 0);
   }
 
   function start() {
-    S.scores = { self: 0, proto: 0, qala: 0 };
-    S.idx = 0; S.answers = [];
+    S.pos = 0; S.ans = {};
     setScreen('quiz');
   }
 
   function restart() {
-    S.scores = { self: 0, proto: 0, qala: 0 };
-    S.idx = 0; S.answers = [];
+    S.pos = 0; S.ans = {};
     try { localStorage.removeItem(STORE); } catch (e) {}
     setScreen('landing');
   }
