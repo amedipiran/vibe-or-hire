@@ -21,7 +21,7 @@
       { ol: 'En webbshop eller e-handel', od: '', route: 'site', w: { qala: 3, proto: 1 } },
       { ol: 'En hemsida eller innehållssajt', od: '', route: 'site', w: { qala: 2, proto: 1 } },
       { ol: 'En medlems- eller kurssajt', od: 'Community, kurser eller inloggat innehåll', route: 'site', w: { qala: 2, proto: 1 } },
-      { ol: 'En webbapp, ett verktyg eller en SaaS', od: 'Inte en WordPress-sajt', route: 'app', app: true },
+      { ol: 'En webbapp, ett verktyg eller en SaaS', od: '', route: 'app', app: true },
       { ol: 'Ett experiment eller en intern grej', od: '', route: 'experiment', w: { self: 3 } }
     ] },
     { id: 'livslangd', q: 'Hur länge ska det leva?', opts: [
